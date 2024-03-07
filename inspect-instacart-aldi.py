@@ -9,8 +9,8 @@ permitted_list = ['produce','dairy','beverages','meat-and-seafood','frozen',
 
 items_raw = []
 
-
 driver = webdriver.Firefox()
+
 driver.get('https://www.instacart.com')
 
 login_button = None
@@ -23,7 +23,7 @@ login_button.click()
 
 time.sleep(1)
 
-driver.find_element_by_name('email').send_keys('m18018776595@163.com')
+driver.find_element_by_name('email').send_keys(input("email: "))
 pswd_field = driver.find_element_by_name('password')
 pswd_field.send_keys(getpass('password: ') + Keys.TAB + Keys.TAB + Keys.ENTER)
 
@@ -32,23 +32,24 @@ _ = input("Press ENTER when bypassed reCAPTCHA and loaded store")
 for cat in permitted_list:
   driver.get("https://www.instacart.com/store/aldi/collections/" + cat)
 
-  time.sleep(3)
+  time.sleep(2.5)
 
+  # scroll main page to the bottom to load all entries
   store_wrap = driver.find_element_by_id('store-wrapper')
   old_y, new_y = -9, driver.execute_script('return document.body.scrollHeight')
   while old_y != new_y:
     old_y = new_y
-    time.sleep(1)
     store_wrap.send_keys(Keys.PAGE_DOWN)
+    time.sleep(1)
     new_y = driver.execute_script('return document.body.scrollHeight')
 
+  # find entries with price tag
   for entry in driver.find_elements_by_tag_name('a'):
     et: str = entry.text
     if '$' in et:
       items_raw.append(et)
     
   print(f"Finished scraping {cat}")
-
 
 with open('items_raw.pkl', 'wb') as f:
   pickle.dump(items_raw, f)
