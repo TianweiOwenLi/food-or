@@ -1,34 +1,63 @@
-import requests
-from bs4 import BeautifulSoup
-
-url = "https://www.instacart.com/store/aldi/storefront"
-response = requests.get(url)
+import time, pickle
+from getpass import getpass
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 
 permitted_list = ['produce','dairy','beverages','meat-and-seafood','frozen',
   'baked-goods','3089-deli','3095-prepared-foods','dry-goods-pasta',
   'canned-goods','breakfast-foods']
 
-product_link_list = []
+items_raw = []
+
+
+driver = webdriver.Firefox()
+driver.get('https://www.instacart.com')
+
+login_button = None
+while not login_button:
+  for button in driver.find_elements_by_tag_name('button'):
+    if button.text == 'Log in':
+      login_button = button
+
+login_button.click()
+
+time.sleep(1)
+
+driver.find_element_by_name('email').send_keys('m18018776595@163.com')
+pswd_field = driver.find_element_by_name('password')
+pswd_field.send_keys(getpass('password: ') + Keys.TAB + Keys.TAB + Keys.ENTER)
+
+_ = input("Press ENTER when bypassed reCAPTCHA and loaded store")
 
 for cat in permitted_list:
-  url = "https://www.instacart.com/store/aldi/collections/" + cat
+  driver.get("https://www.instacart.com/store/aldi/collections/" + cat)
+
+  time.sleep(3)
+
+  store_wrap = driver.find_element_by_id('store-wrapper')
+  old_y, new_y = -9, driver.execute_script('return document.body.scrollHeight')
+  while old_y != new_y:
+    old_y = new_y
+    time.sleep(1)
+    store_wrap.send_keys(Keys.PAGE_DOWN)
+    new_y = driver.execute_script('return document.body.scrollHeight')
+
+  for entry in driver.find_elements_by_tag_name('a'):
+    et: str = entry.text
+    if '$' in et:
+      items_raw.append(et)
+    
+  print(f"Finished scraping {cat}")
 
 
-  response = requests.get(url)
-  # payload = {"uname": "test", "pass": "test"} 
-  # s = requests.session() 
-  # response = s.post(url, data=payload) 
+with open('items_raw.pkl', 'wb') as f:
+  pickle.dump(items_raw, f)
 
-  print(url)
-
-  if response.status_code == 200:
-    soup = BeautifulSoup(response.text, 'html.parser')
-    for a_elt in soup.find_all('a'):
-      href = a_elt.get('href')
-      print(f"  {href}")
-      if '/store/aldi/products/' in href:
-        product_link_list.append(href)
-  else:
-    print(f"Failed to retrieve the webpage {url}")
-
-print(len(product_link_list))
+# lines: list[str] = [line.strip() for line in et.split('\n')]
+#   name, price = None, None
+#   for i, line in enumerate(lines):
+#     if (not name) and price and line.isalpha():
+#       name = line
+#     if '$' in line and '.' in line:
+#       price = float(line[1:])
+#     if line.startswith('About')
