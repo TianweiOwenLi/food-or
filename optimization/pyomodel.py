@@ -4,25 +4,22 @@ model = AbstractModel()
 
 R_p = NonNegativeReals
 
-# TODO: consider food expiration date
-
 model.Foods, model.Nutrients = Set(), Set()
 
-model.abstract_cost = Param(model.Foods, within=R_p)
-model.nut_amount = Param(model.Foods, model.Nutrients, within=R_p)
+model.qty = Var(model.Foods, within=NonNegativeIntegers)
 
-model.nut_min = Param(model.Nutrients, within=R_p, default=0.0)
-model.nut_max = Param(model.Nutrients, within=R_p, detault=float('inf'))
+model.price = Param(model.Foods, within=R_p)
+model.nuts = Param(model.Foods, model.Nutrients, within=R_p, default=0.0)
 
-model.portion = Param(model.Foods, within=R_p)
+model.nmin = Param(model.Nutrients, within=R_p, default=0.0)
+model.nmax = Param(model.Nutrients, within=R_p, default=float('inf'))
 
-def abstract_cost_rule(model):
-  return sum(model.abstract_cost[i] * model.x[i] for i in model.Foods)
+def abstract_cost_rule(m):
+  return sum(m.price[i] * m.qty[i] for i in m.Foods)
 model.cost = Objective(rule=abstract_cost_rule)
 
-def nutrient_rule(model, n):
-  return inequality(
-    model.nut_min[n], 
-    sum(model.nut_amount[f][n] * model.portion[f] for f in model.Foods),  
-    model.nut_max[n]
-  )
+def nutrient_rule(m, n):
+  return m.nmin[n] <= sum(m.nuts[f][n] for f in m.Foods) <= m.nmax[n]
+model.constraint = Constraint(rule=nutrient_rule)
+
+model.Nutrients.construct()
