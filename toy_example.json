@@ -1,0 +1,26 @@
+{
+  "Nutrients": ["va", "vb", "vc"],
+  "Foods": ["apple", "carrot"],
+  "price": {
+    "apple": 1.5,
+    "carrot": 0.9
+  },
+  "amount": [
+    { "index": ["apple", "va"], "value": 1.0 },
+    { "index": ["apple", "vb"], "value": 2.5 },
+    { "index": ["apple", "vc"], "value": 5.0 },
+    { "index": ["carrot", "va"], "value": 4.0 },
+    { "index": ["carrot", "vb"], "value": 1.0 },
+    { "index": ["carrot", "vc"], "value": 3.0 }
+  ],
+  "nmin": {
+    "va": 2.5, 
+    "vb": 3.0, 
+    "vc": 6.0
+  },
+  "nmax": {
+    "va": 10.0, 
+    "vb": 20.0, 
+    "vc": 60.0
+  }
+}

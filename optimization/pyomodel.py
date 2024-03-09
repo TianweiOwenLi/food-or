@@ -9,17 +9,20 @@ model.Foods, model.Nutrients = Set(), Set()
 model.qty = Var(model.Foods, within=NonNegativeIntegers)
 
 model.price = Param(model.Foods, within=R_p)
-model.nuts = Param(model.Foods, model.Nutrients, within=R_p, default=0.0)
+model.amount = Param(model.Foods, model.Nutrients, within=R_p, default=0.0)
 
 model.nmin = Param(model.Nutrients, within=R_p, default=0.0)
 model.nmax = Param(model.Nutrients, within=R_p, default=float('inf'))
 
-def abstract_cost_rule(m):
-  return sum(m.price[i] * m.qty[i] for i in m.Foods)
+def abstract_cost_rule(model):
+  return sum(model.price[i] * model.qty[i] for i in model.Foods)
 model.cost = Objective(rule=abstract_cost_rule)
 
-def nutrient_rule(m, n):
-  return m.nmin[n] <= sum(m.nuts[f][n] for f in m.Foods) <= m.nmax[n]
-model.constraint = Constraint(rule=nutrient_rule)
+def nutrient_rule(model, nutrient):
+  value = sum(model.amount[f,nutrient] * model.qty[f] for f in model.Foods)
+  return inequality(model.nmin[nutrient], value, model.nmax[nutrient])
+model.nutrient_limit = Constraint(model.Nutrients, rule=nutrient_rule)
 
-model.Nutrients.construct()
+data = DataPortal()
+data.load(filename='../toy_example.json')
+ins = model.create_instance(data)
